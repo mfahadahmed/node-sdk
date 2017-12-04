@@ -15,70 +15,80 @@
  ***************************************************************************/
 
 var express = require('express');
-var Config = require('../models/Config');
-var Visitor = require('../models/Visitor');
-var Product = require('../models/Product');
-
-// DemoController class.
-class DemoController {
-    /**
-     * DemoController constructor.
-     */
-    constructor() {
-        this.optimizely = null;
-        this.config = new Config();
-
-        this.visitors = [
-            new Visitor(10001, 'Mike', 23),
-            new Visitor(10002, 'Ali', 29),
-            new Visitor(10003, 'Sally', 18),
-            new Visitor(10004, 'Jennifer', 44),
-            new Visitor(10005, 'Randall', 29)
-        ];
-
-        this.products = [
-            new Product(1, 'Long Sleeve Swing Shirt', 'Baby Blue', 'Shirts', 54),
-            new Product(2, 'Bo Henry', 'Khaki', 'Shorts', 37),
-            new Product(3, 'The "Go" Bag', 'Forest Green', 'Bags', 118),
-            new Product(4, 'Springtime', 'Rose', 'Dresses', 84),
-            new Product(5, 'The Night Out', 'Olive Green', 'Dresses', 153),
-            new Product(6, 'Dawson Trolley', 'Pine Green', 'Shirts', 107)
-        ];
-    }
-}
+var request = require('request');
+var optimizelyClient = require('../../');
+var Config = require('../models/config');
+var Visitor = require('../models/visitor');
+var Product = require('../models/product');
+var DemoApp = require('../models/demo_app');
 
 var router = express.Router();
+var demoApp = new DemoApp();
 
-// POST - set project configuration.
-router.post('/config', function(req, res) {
+// GET - get homepage data.
+router.get('/', function(req, res) {
     res.send({
-        service: "/config",
-        type: "POST",
-        status: "incomplete",
-        "config": req.body
+        status: 0,
+        sdk_title: 'Optimizely Node SDK',
+        doc_link: 'https://developers.optimizely.com/x/solutions/sdks/reference/index.html?language=node'
     });
 });
 
-// GET - get visitors list.
-router.get('/visitor', function(req, res) {
-    res.send(
-        {
-          service: "/visitor",
-          type: "GET",
-          status: "incomplete"
+// POST - set project configuration.
+router.post('/config', function(req, res) {
+    demoApp.config = new Config(req.body.project_id, req.body.experiment_key, req.body.event_key);
+    var url = `https://cdn.optimizely.com/json/${demoApp.config.projectId}.json`;
+    
+    request.get(url, function (error, response, body) {
+        // Retrieving project configuration.
+        if (!error && response.statusCode == 200) {
+            demoApp.config.projectConfigJson = JSON.parse(body);
+            demoApp.optimizely = optimizelyClient.createInstance(
+                {datafile: demoApp.config.projectConfigJson}
+            );
+
+            // Failure in creating optimizely instance.
+            if (!(demoApp && demoApp.optimizely.isValidInstance)) {
+                res.send({status: '2'});
+            }
+
+            // Project configuration saved successfully.
+            res.send({
+                status: 0,
+                project_id: demoApp.config.projectId,
+                experiment_key: demoApp.config.experimentKey,
+                event_key: demoApp.config.eventKey,
+                datafile_json: demoApp.config.projectConfigJson
+            });
         }
-      )
+        else {
+            // Invalid project Id.
+            res.send({status: 1});
+        }
+    });
+});
+
+// GET - get project configuration.
+router.get('/config', function(req, res) {
+    var projectId = null, experimentKey = null, eventKey = null, projectConfigJson = null;
+    if (demoApp.config) {
+        projectId = demoApp.config.projectId;
+        experimentKey = demoApp.config.experimentKey;
+        eventKey = demoApp.config.eventKey;
+        projectConfigJson = demoApp.config.projectConfigJson;
+    }
+
+    res.send({
+        status: 0,
+        project_id: projectId,
+        experiment_key: experimentKey,
+        event_key: eventKey,
+        datafile_json: projectConfigJson
+    });
 });
 
 // POST - select visitor.
-router.post('/visitor', function(req, res) {
-    res.send(
-        {
-          service: "/visitor",
-          type: "POST",
-          status: "incomplete"
-        }
-      )
+router.post('/select_visitor', function(req, res) {
 });
 
 // GET - get products list.

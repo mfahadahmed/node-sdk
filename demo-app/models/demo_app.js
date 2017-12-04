@@ -14,21 +14,34 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// The Config class.
-class Config {
+var Config = require('./config');
+var Visitor = require('./visitor');
+var Product = require('./product');
+
+// Controller class for Demo Application.
+class DemoApp {
     /**
-     * Config constructor.
-     * @param  {string}      projectId
-     * @param  {string}      experimentKey
-     * @param  {string}      eventKey
-     * @param  {string}      projectConfigJson
-    */
-    constructor(projectId, experimentKey, eventKey) {
-        this.projectId = projectId;
-        this.experimentKey = experimentKey;
-        this.eventKey = eventKey;
-        this.projectConfigJson = null;
+     * DemoApp constructor.
+     */
+    constructor() {
+        this.optimizely = null;
+        this.config = null;
+        this.visitors = [
+            new Visitor(10001, 'Mike', 23),
+            new Visitor(10002, 'Ali', 29),
+            new Visitor(10003, 'Sally', 18),
+            new Visitor(10004, 'Jennifer', 44),
+            new Visitor(10005, 'Randall', 29)
+        ];
+        this.products = [
+            new Product(1, 'Long Sleeve Swing Shirt', 'Baby Blue', 'Shirts', 54),
+            new Product(2, 'Bo Henry', 'Khaki', 'Shorts', 37),
+            new Product(3, 'The "Go" Bag', 'Forest Green', 'Bags', 118),
+            new Product(4, 'Springtime', 'Rose', 'Dresses', 84),
+            new Product(5, 'The Night Out', 'Olive Green', 'Dresses', 153),
+            new Product(6, 'Dawson Trolley', 'Pine Green', 'Shirts', 107)
+        ];
     }
 }
 
-module.exports = Config;
+module.exports = DemoApp;
