@@ -20,7 +20,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var demo = require('./routes/demo');
+var demoRoutes = require('./routes/demo_routes');
 
 // Initiailize express object.
 var app = express();
@@ -38,7 +38,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Setting routes.
-app.use('/', demo);
+app.use('/', demoRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

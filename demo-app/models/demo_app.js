@@ -14,9 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-var Config = require('./config');
-var Visitor = require('./visitor');
 var Product = require('./product');
+const IMAGE_DIR = 'public/images/';
 
 // Controller class for Demo Application.
 class DemoApp {
@@ -26,20 +25,16 @@ class DemoApp {
     constructor() {
         this.optimizely = null;
         this.config = null;
-        this.visitors = [
-            new Visitor(10001, 'Mike', 23),
-            new Visitor(10002, 'Ali', 29),
-            new Visitor(10003, 'Sally', 18),
-            new Visitor(10004, 'Jennifer', 44),
-            new Visitor(10005, 'Randall', 29)
-        ];
         this.products = [
-            new Product(1, 'Long Sleeve Swing Shirt', 'Baby Blue', 'Shirts', 54),
-            new Product(2, 'Bo Henry', 'Khaki', 'Shorts', 37),
-            new Product(3, 'The "Go" Bag', 'Forest Green', 'Bags', 118),
-            new Product(4, 'Springtime', 'Rose', 'Dresses', 84),
-            new Product(5, 'The Night Out', 'Olive Green', 'Dresses', 153),
-            new Product(6, 'Dawson Trolley', 'Pine Green', 'Shirts', 107)
+            new Product(1, 'Long Sleeve Swing Shirt', 'Baby Blue', 'Shirts', 54, IMAGE_DIR + 'item_7.png'),
+            new Product(2, 'Bo Henry', 'Khaki', 'Shorts', 37, IMAGE_DIR + 'item_2.png'),
+            new Product(3, 'The "Go" Bag', 'Forest Green', 'Bags', 118, IMAGE_DIR + 'item_3.png'),
+            new Product(4, 'Springtime', 'Rose', 'Dresses', 84, IMAGE_DIR + 'item_4.png'),
+            new Product(5, 'The Night Out', 'Olive Green', 'Dresses', 153, IMAGE_DIR + 'item_5.png'),
+            new Product(6, 'Dawson Trolley', 'Pine Green', 'Shirts', 107, IMAGE_DIR + 'item_6.png'),
+            new Product(7, 'Derby Hat', 'White', 'Hats', 100, IMAGE_DIR + 'item_1.png'),
+            new Product(8, 'Long Sleever Tee', 'Baby Blue', 'Shirts', 62, IMAGE_DIR + 'item_8.png'),
+            new Product(9, 'Simple Cardigan', 'Olive Green', 'Sweaters', 238, IMAGE_DIR + 'item_9.png')
         ];
     }
 }

@@ -18,9 +18,9 @@ var express = require('express');
 var request = require('request');
 var optimizelyClient = require('../../');
 var Config = require('../models/config');
-var Visitor = require('../models/visitor');
 var Product = require('../models/product');
 var DemoApp = require('../models/demo_app');
+var DemoAppLogger = require('../models/demo_logger');
 
 var router = express.Router();
 var demoApp = new DemoApp();
@@ -44,11 +44,14 @@ router.post('/config', function(req, res) {
         if (!error && response.statusCode == 200) {
             demoApp.config.projectConfigJson = JSON.parse(body);
             demoApp.optimizely = optimizelyClient.createInstance(
-                {datafile: demoApp.config.projectConfigJson}
+                {
+                    datafile: demoApp.config.projectConfigJson,
+                    logger: new DemoAppLogger()
+                }
             );
 
             // Failure in creating optimizely instance.
-            if (!(demoApp && demoApp.optimizely.isValidInstance)) {
+            if (!(demoApp.optimizely && demoApp.optimizely.isValidInstance)) {
                 res.send({status: '2'});
             }
 
@@ -88,51 +91,100 @@ router.get('/config', function(req, res) {
 });
 
 // POST - select visitor.
-router.post('/select_visitor', function(req, res) {
+router.post('/visitor', function(req, res) {
+    // Uninitialized Optimizely client.
+    if (!(demoApp.config && demoApp.config.experimentKey && demoApp.optimizely)) {
+        res.send({status: 1});
+    }
+
+    var visitorId = req.body.visitor_id;
+    if (!visitorId) {
+        // Invalid visitor Id.
+        res.send({status: 1});
+    }
+
+    var products = demoApp.products.slice(0);
+    var experimentKey = demoApp.config.experimentKey;
+    var variation = demoApp.optimizely.activate(experimentKey, visitorId);
+
+    // Applying variation.
+    if (variation) {
+        if (variation === 'sort_by_name') {
+            products.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (variation === 'sort_by_price') {
+            products.sort((a, b) => a.price - b.price);
+        }
+    }
+
+    res.send({
+        status: 0,
+        variation_key: variation,
+        products: products
+    });
 });
 
 // GET - get products list.
 router.get('/products', function(req, res) {
-    res.send(
-        {
-          service: "/products",
-          type: "GET",
-          status: "incomplete"
-        }
-      )
+    res.send({
+        status: 0,
+        products: demoApp.products
+    });
 });
 
 // POST - buy a product.
 router.post('/buy', function(req, res) {
-    res.send(
-        {
-          service: "/buy",
-          type: "POST",
-          status: "incomplete"
-        }
-      )
+    // Uninitialized Optimizely client.
+    if (!(demoApp.config && demoApp.config.eventKey && demoApp.optimizely)) {
+        res.send({status: 1});
+    }
+
+    var visitorId = req.body.visitor_id;
+    if (!visitorId) {
+        // Invalid visitor Id.
+        res.send({status: 1});
+    }
+
+    var productId = req.body.product_id;
+    if (!productId) {
+        // Invalid visitor Id.
+        res.send({status: 1});
+    }
+
+    var eventTags = {
+        int_param: 420,
+        string_param: "420",
+        bool_param: false,
+        revenue: 4200,
+        value: 1000
+    };
+
+    demoApp.optimizely.track(demoApp.config.eventKey, visitorId, null, eventTags);
+    res.send({status: 0});
 });
 
-// GET - get log messages.
+// GET - get all log messages.
 router.get('/messages', function(req, res) {
-    res.send(
-        {
-          service: "/messages",
-          type: "GET",
-          status: "incomplete"
-        }
-      )
+    if (!(demoApp.optimizely && demoApp.optimizely.logger && 
+        demoApp.optimizely.logger instanceof DemoAppLogger)) {
+        res.send({status: 1});
+    }
+
+    res.send({
+        status: 0,
+        logs: demoApp.optimizely.logger.getSortedLogs()
+    });
 });
 
-// POST - clear all log messages.
+// POST - remove all log messages.
 router.post('/messages', function(req, res) {
-    res.send(
-        {
-          service: "/messages",
-          type: "POST",
-          status: "incomplete"
-        }
-      )
+    if (!(demoApp.optimizely && demoApp.optimizely.logger && 
+        demoApp.optimizely.logger instanceof DemoAppLogger)) {
+        res.send({status: 1});
+    }
+
+    demoApp.optimizely.logger.clearLogs();
+
+    res.send({status: 0});
 });
 
 module.exports = router;
