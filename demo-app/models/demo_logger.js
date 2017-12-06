@@ -14,6 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
+ var enums = require('../../lib/utils/enums');
+
  /**
   * Demo-Log-Message class.
   */
@@ -49,7 +51,7 @@
     */
     log(logLevel, logMessage) {
         var timestamp = Math.floor(Date.now() / 1000);
-        this.logMessages.push(new DemoLogMessage(timestamp, logLevel, logMessage));
+        this.logMessages.push(new DemoLogMessage(timestamp, getLogLevelName(logLevel), logMessage));
     }
 
     /**
@@ -65,6 +67,26 @@
      */
     clearLogs() {
         this.logMessages = [];
+    }
+  }
+
+  /**
+ * Get log level name
+ * @param  {string} logLevel Verbosity level to log at
+ * @return {string} String name of log level
+ */
+function getLogLevelName(logLevel) {
+    switch (logLevel) {
+      case enums.LOG_LEVEL.DEBUG:
+        return 'DEBUG';
+      case enums.LOG_LEVEL.INFO:
+        return 'INFO';
+      case enums.LOG_LEVEL.WARNING:
+        return 'WARNING';
+      case enums.LOG_LEVEL.ERROR:
+        return 'ERROR';
+      default:
+        return 'NOTSET';
     }
   }
 
