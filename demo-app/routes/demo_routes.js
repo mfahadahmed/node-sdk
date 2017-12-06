@@ -21,52 +21,56 @@ var Config = require('../models/config');
 var Product = require('../models/product');
 var DemoApp = require('../models/demo_app');
 var DemoAppLogger = require('../models/demo_logger');
+var STATUS_CODES = require('../status_codes').STATUS_CODES;
 
 var router = express.Router();
-var demoApp = new DemoApp();
+var DemoApplication = new DemoApp();
 
 // GET - get homepage data.
 router.get('/', function(req, res) {
     res.send({
-        status: 0,
-        sdk_title: 'Optimizely Node SDK',
+        status: STATUS_CODES.SUCCESS,
+        sdk_title: 'Node',
         doc_link: 'https://developers.optimizely.com/x/solutions/sdks/reference/index.html?language=node'
     });
 });
 
 // POST - set project configuration.
 router.post('/config', function(req, res) {
-    demoApp.config = new Config(req.body.project_id, req.body.experiment_key, req.body.event_key);
-    var url = `https://cdn.optimizely.com/json/${demoApp.config.projectId}.json`;
+    // Project Id must be provided.
+    if (!req.body.project_id) {
+        res.send({status: STATUS_CODES.EMPTY_PROJECT_ID});
+    }
+
+    DemoApplication.config = new Config(req.body.project_id, req.body.experiment_key, req.body.event_key);
+    var url = `https://cdn.optimizely.com/json/${DemoApplication.config.projectId}.json`;
     
     request.get(url, function (error, response, body) {
         // Retrieving project configuration.
         if (!error && response.statusCode == 200) {
-            demoApp.config.projectConfigJson = JSON.parse(body);
-            demoApp.optimizely = optimizelyClient.createInstance(
-                {
-                    datafile: demoApp.config.projectConfigJson,
+            DemoApplication.config.projectConfigJson = JSON.parse(body);
+            DemoApplication.optimizely = optimizelyClient.createInstance({
+                    datafile: DemoApplication.config.projectConfigJson,
                     logger: new DemoAppLogger()
-                }
-            );
+                });
 
-            // Failure in creating optimizely instance.
-            if (!(demoApp.optimizely && demoApp.optimizely.isValidInstance)) {
-                res.send({status: '2'});
+            // Uninitialized optimizely instance.
+            if (!(DemoApplication.optimizely && DemoApplication.optimizely.isValidInstance)) {
+                res.send({status: STATUS_CODES.UNINITIALIZE_OPTIMIZELY_CLIENT});
             }
 
             // Project configuration saved successfully.
             res.send({
-                status: 0,
-                project_id: demoApp.config.projectId,
-                experiment_key: demoApp.config.experimentKey,
-                event_key: demoApp.config.eventKey,
-                datafile_json: demoApp.config.projectConfigJson
+                status: STATUS_CODES.SUCCESS,
+                project_id: DemoApplication.config.projectId,
+                experiment_key: DemoApplication.config.experimentKey,
+                event_key: DemoApplication.config.eventKey,
+                datafile_json: DemoApplication.config.projectConfigJson
             });
         }
         else {
-            // Invalid project Id.
-            res.send({status: 1});
+            // Datafile does not found against provided project Id.
+            res.send({status: STATUS_CODES.DATAFILE_NOT_FOUND});
         }
     });
 });
@@ -74,15 +78,15 @@ router.post('/config', function(req, res) {
 // GET - get project configuration.
 router.get('/config', function(req, res) {
     var projectId = null, experimentKey = null, eventKey = null, projectConfigJson = null;
-    if (demoApp.config) {
-        projectId = demoApp.config.projectId;
-        experimentKey = demoApp.config.experimentKey;
-        eventKey = demoApp.config.eventKey;
-        projectConfigJson = demoApp.config.projectConfigJson;
+    if (DemoApplication.config) {
+        projectId = DemoApplication.config.projectId;
+        experimentKey = DemoApplication.config.experimentKey;
+        eventKey = DemoApplication.config.eventKey;
+        projectConfigJson = DemoApplication.config.projectConfigJson;
     }
 
     res.send({
-        status: 0,
+        status: STATUS_CODES.SUCCESS,
         project_id: projectId,
         experiment_key: experimentKey,
         event_key: eventKey,
@@ -92,20 +96,20 @@ router.get('/config', function(req, res) {
 
 // POST - select visitor.
 router.post('/visitor', function(req, res) {
-    // Uninitialized Optimizely client.
-    if (!(demoApp.config && demoApp.config.experimentKey && demoApp.optimizely)) {
-        res.send({status: 1});
-    }
-
     var visitorId = req.body.visitor_id;
     if (!visitorId) {
-        // Invalid visitor Id.
-        res.send({status: 1});
+        // Visitor Id must be provided.
+        res.send({status: STATUS_CODES.EMPTY_VISITOR_ID});
     }
 
-    var products = demoApp.products.slice(0);
-    var experimentKey = demoApp.config.experimentKey;
-    var variation = demoApp.optimizely.activate(experimentKey, visitorId);
+    // Uninitialized Optimizely client.
+    if (!(DemoApplication.config && DemoApplication.config.experimentKey && DemoApplication.optimizely)) {
+        res.send({status: STATUS_CODES.UNINITIALIZE_OPTIMIZELY_CLIENT});
+    }
+
+    var products = DemoApplication.products.slice(0);
+    var experimentKey = DemoApplication.config.experimentKey;
+    var variation = DemoApplication.optimizely.activate(experimentKey, visitorId);
 
     // Applying variation.
     if (variation) {
@@ -117,7 +121,7 @@ router.post('/visitor', function(req, res) {
     }
 
     res.send({
-        status: 0,
+        status: STATUS_CODES.SUCCESS,
         variation_key: variation,
         products: products
     });
@@ -126,28 +130,28 @@ router.post('/visitor', function(req, res) {
 // GET - get products list.
 router.get('/products', function(req, res) {
     res.send({
-        status: 0,
-        products: demoApp.products
+        status: STATUS_CODES.SUCCESS,
+        products: DemoApplication.products
     });
 });
 
 // POST - buy a product.
 router.post('/buy', function(req, res) {
-    // Uninitialized Optimizely client.
-    if (!(demoApp.config && demoApp.config.eventKey && demoApp.optimizely)) {
-        res.send({status: 1});
-    }
-
     var visitorId = req.body.visitor_id;
     if (!visitorId) {
-        // Invalid visitor Id.
-        res.send({status: 1});
+        // Empty visitor Id.
+        res.send({status: STATUS_CODES.EMPTY_VISITOR_ID});
     }
 
     var productId = req.body.product_id;
     if (!productId) {
-        // Invalid visitor Id.
-        res.send({status: 1});
+        // Empty product Id.
+        res.send({status: STATUS_CODES.EMPTY_PRODUCT_ID});
+    }
+
+    // Uninitialized Optimizely client.
+    if (!(DemoApplication.config && DemoApplication.config.eventKey && DemoApplication.optimizely)) {
+        res.send({status: STATUS_CODES.UNINITIALIZE_OPTIMIZELY_CLIENT});
     }
 
     var eventTags = {
@@ -158,33 +162,32 @@ router.post('/buy', function(req, res) {
         value: 1000
     };
 
-    demoApp.optimizely.track(demoApp.config.eventKey, visitorId, null, eventTags);
-    res.send({status: 0});
+    DemoApplication.optimizely.track(DemoApplication.config.eventKey, visitorId, null, eventTags);
+    res.send({status: STATUS_CODES.SUCCESS});
 });
 
 // GET - get all log messages.
 router.get('/messages', function(req, res) {
-    if (!(demoApp.optimizely && demoApp.optimizely.logger && 
-        demoApp.optimizely.logger instanceof DemoAppLogger)) {
-        res.send({status: 1});
+    if (!(DemoApplication.optimizely && DemoApplication.optimizely.logger && 
+        DemoApplication.optimizely.logger instanceof DemoAppLogger)) {
+        res.send({status: STATUS_CODES.UNINITIALIZE_OPTIMIZELY_CLIENT});
     }
 
     res.send({
-        status: 0,
-        logs: demoApp.optimizely.logger.getSortedLogs()
+        status: STATUS_CODES.SUCCESS,
+        logs: DemoApplication.optimizely.logger.getSortedLogs()
     });
 });
 
 // POST - remove all log messages.
 router.post('/messages', function(req, res) {
-    if (!(demoApp.optimizely && demoApp.optimizely.logger && 
-        demoApp.optimizely.logger instanceof DemoAppLogger)) {
-        res.send({status: 1});
+    if (!(DemoApplication.optimizely && DemoApplication.optimizely.logger && 
+        DemoApplication.optimizely.logger instanceof DemoAppLogger)) {
+        res.send({status: STATUS_CODES.UNINITIALIZE_OPTIMIZELY_CLIENT});
     }
 
-    demoApp.optimizely.logger.clearLogs();
-
-    res.send({status: 0});
+    DemoApplication.optimizely.logger.clearLogs();
+    res.send({status: STATUS_CODES.SUCCESS});
 });
 
 module.exports = router;

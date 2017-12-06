@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2017, Optimizely, Inc. and contributors                   *
+ * Copyright 2016-2017, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -14,19 +14,14 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-var express = require('express');
-var path = require('path');
-var bodyParser = require('body-parser');
-var demoRoutes = require('./routes/demo_routes');
-
-// Initiailize express object.
-var app = express();
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Setting routes.
-app.use('/', demoRoutes);
-
-module.exports = app;
+ /**
+  * Demo-App API status codes.
+  */
+exports.STATUS_CODES = {
+    SUCCESS:                        '0',
+    UNINITIALIZE_OPTIMIZELY_CLIENT: '001',
+    EMPTY_PROJECT_ID:               '002',
+    DATAFILE_NOT_FOUND:             '003',
+    EMPTY_VISITOR_ID:               '004',
+    EMPTY_PRODUCT_ID:               '005'
+};
