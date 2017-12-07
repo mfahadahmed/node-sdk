@@ -22,11 +22,11 @@ var demoRoutes = require('./routes/demo_routes');
 // Initiailize express object.
 var app = express();
 
+app.use(express.static(path.join(__dirname, 'site')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: false
 }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Setting routes.
 app.use('/', demoRoutes);
