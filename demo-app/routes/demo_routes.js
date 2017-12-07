@@ -27,7 +27,7 @@ var router = express.Router();
 var DemoApplication = new DemoApp();
 
 // GET - get homepage data.
-router.get('/', function (req, res) {
+router.get('/home', function (req, res) {
     res.send({
         status: STATUS_CODES.SUCCESS,
         sdk_title: 'Node',
