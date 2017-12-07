@@ -23,7 +23,7 @@ class Product {
      * @param   {string}        color
      * @param   {string}        category
      * @param   {Number}        price
-    */
+     */
     constructor(id, name, color, category, price, imageUrl) {
         this.id = id;
         this.name = name;

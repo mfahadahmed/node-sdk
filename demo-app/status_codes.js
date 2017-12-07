@@ -14,14 +14,14 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
- /**
-  * Demo-App API status codes.
-  */
+/**
+ * Demo-App API status codes.
+ */
 exports.STATUS_CODES = {
-    SUCCESS:                        '0',
+    SUCCESS: '0',
     UNINITIALIZE_OPTIMIZELY_CLIENT: '001',
-    EMPTY_PROJECT_ID:               '002',
-    DATAFILE_NOT_FOUND:             '003',
-    EMPTY_VISITOR_ID:               '004',
-    EMPTY_PRODUCT_ID:               '005'
+    EMPTY_PROJECT_ID: '002',
+    DATAFILE_NOT_FOUND: '003',
+    EMPTY_VISITOR_ID: '004',
+    EMPTY_PRODUCT_ID: '005'
 };

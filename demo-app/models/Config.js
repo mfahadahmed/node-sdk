@@ -22,7 +22,7 @@ class Config {
      * @param  {string}      experimentKey
      * @param  {string}      eventKey
      * @param  {string}      projectConfigJson
-    */
+     */
     constructor(projectId, experimentKey, eventKey) {
         this.projectId = projectId;
         this.experimentKey = experimentKey;
